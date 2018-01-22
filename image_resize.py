@@ -1,7 +1,6 @@
 import argparse
 from PIL import Image
 import os
-import sys
 
 
 def open_image(path_to_original):
@@ -34,21 +33,14 @@ def resize_image(image, new_image_size):
     return output_image
 
 
-def scale_image(image, scale):
-    output_image = image.resize(
-        tuple([int(scale * x) for x in image.size]),
-        Image.ANTIALIAS
-    )
-    return output_image
-
-
 def get_path_to_result(path_to_original, image_size):
-    file_name, _ = os.path.splitext(path_to_original)
+    file_name, extention = os.path.splitext(path_to_original)
     width, height = image_size
-    path_to_result = "{}__{}x{}.png".format(
+    path_to_result = "{}__{}x{}{}".format(
         file_name,
         width,
-        height
+        height,
+        extention
     )
     return path_to_result
 
@@ -86,8 +78,7 @@ def get_input_argument_parser():
         "-s",
         "--scale",
         type=float,
-        help=""
-
+        help="result image size multiplier"
     )
     return parser
 
@@ -102,8 +93,10 @@ if __name__ == "__main__":
     scale = args.scale
 
     if scale and (new_width or new_height):
-        sys.exit("Wrong parameters. "
-                 "Can't be scale and width/height the same time!")
+        parser.error(
+            "Wrong parameters. \n"
+            "Can't be scale and width/height at the same time!"
+        )
 
     image = open_image(path_to_original)
     old_width, old_height = image.size
@@ -117,12 +110,13 @@ if __name__ == "__main__":
         )
         output_image = resize_image(image, new_image_size)
     elif scale:
-        output_image = scale_image(image, scale)
-    else:
-        sys.exit(
-            "You need enter a parameter. "
-            "Scale (-s) or height (-t) or/and width (-w)"
+        output_image = resize_image(
+            image,
+            tuple([int(scale * x) for x in image.size])
         )
+    else:
+        output_image = image
+
     if path_to_result is None:
         path_to_result = get_path_to_result(
             path_to_original,
